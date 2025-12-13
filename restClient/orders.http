@@ -1,0 +1,10 @@
+### Crear Orden
+POST {{baseUrl}}/orders
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "total": 500.50,
+  "customerId": "user_vscode_123",
+  "items": ["Monitor 4K", "HDMI Cable"]
+}

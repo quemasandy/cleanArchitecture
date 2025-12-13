@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Production
+dist/
+build/
+
+# Misc
+.DS_Store
+.env
+.env.local
+.npmrc
+*.log
+
+# Testing
+coverage/
+
+# IDEs
+.vscode/
+.idea/
+
+# Temporary / Generated
+_all_code_context.txt

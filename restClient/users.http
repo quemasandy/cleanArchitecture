@@ -1,0 +1,19 @@
+### Registrar Usuario (Exitoso)
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "email": "andy@vscode.com",
+  "password": "secureExtension123"
+}
+
+### Registrar Usuario (Fallo - password corto)
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "email": "andy@fail.com",
+  "password": "123"
+}

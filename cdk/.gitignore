@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# CDK Output
+cdk.out/
+.cdk.staging/
+
+# TypeScript
+*.js
+!jest.config.js
+*.d.ts
+
+# Misc
+.DS_Store
