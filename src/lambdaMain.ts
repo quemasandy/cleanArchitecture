@@ -35,7 +35,14 @@ import { OrderController } from './presentation/controllers/OrderController';
 // 1. Infraestructura
 // NOTA: Usamos InMemory para probar que la Lambda funciona sin depender de DB externa por ahora.
 // En producción, aquí instanciarías MongoUserRepository o DynamoDBUserRepository
-const userRepo: IUserRepository = new InMemoryUserRepository(); 
+import { DynamoDbUserRepository } from './infrastructure/repositories/DynamoDbUserRepository';
+
+// 1. Infraestructura
+const usersTable = process.env.USERS_TABLE;
+if (!usersTable) {
+    throw new Error("USERS_TABLE environment variable is not set. DynamoDbUserRepository requires a table name.");
+}
+const userRepo: IUserRepository = new DynamoDbUserRepository(usersTable); 
 const emailService: IEmailService = new SmtpEmailClient();
 // Nota: Puedes crear versiones Mock de Payment y Queue si no quieres credenciales reales aun
 const paymentGateway: IPaymentGateway = new CybersourcePaymentGateway(); 

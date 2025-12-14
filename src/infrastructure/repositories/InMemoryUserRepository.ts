@@ -14,20 +14,20 @@ export class InMemoryUserRepository implements IUserRepository {
         // But clean arch entities usually have IDs generated before persistence or by persistence.
         // Let's assume the entity passed in is complete for now.
     }
-    this.users.set(user.email, user); // Indexing by email for findByEmail
+    this.users.set(user.email.getValue(), user); // Indexing by email for findByEmail
     if (user.id) {
         this.users.set(user.id, user); // Indexing by ID as well
     }
     return Promise.resolve(user);
   }
 
-  async update(user: User): Promise<void> {
+  async update(user: User): Promise<User> {
     console.log(`[InMemoryRepo] Updating user: ${user.email}`);
     if (user.id) {
         this.users.set(user.id, user);
     }
-    this.users.set(user.email, user);
-    return Promise.resolve();
+    this.users.set(user.email.getValue(), user);
+    return Promise.resolve(user);
   }
 
   async findByEmail(email: string): Promise<User | null> {

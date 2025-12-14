@@ -47,7 +47,7 @@ export class SqlUserRepository implements IUserRepository {
     return user;
   }
 
-  async update(user: User): Promise<void> {
+  async update(user: User): Promise<User> {
     // Implementación estándar (Last Write Wins) o sin checks de concurrencia
     const persistenceData = UserMapper.toPersistence(user);
     const sql = `UPDATE users SET email = ?, is_active = ?, version = ? WHERE id = ?`;
@@ -57,6 +57,7 @@ export class SqlUserRepository implements IUserRepository {
       persistenceData.version,
       persistenceData.user_id
     ]);
+    return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {

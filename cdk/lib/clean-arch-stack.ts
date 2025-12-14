@@ -38,6 +38,31 @@ export class CleanArchStack extends cdk.Stack {
     // NOTA: No necesitamos definir una "VPC" (red privada) explícitamente aquí,
     // por lo que nuestras Lambdas tendrán acceso a internet público (útil para llamar APIs externas).
 
+    // ========================================================================
+    // 1.5. DEFINICIÓN DE DYNAMODB TABLE
+    // ========================================================================
+    
+    // Importamos dynamodb (asegúrate de tenerlo importado arriba: import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';)
+    // O podemos usar cdk.aws_dynamodb si no queremos agregar import explicitamente, pero mejor agregarlo.
+    // Voy a asumir que necesitamos agregar el import arriba, lo haré en un bloque separado o usare la referencia completa si es posible,
+    // pero para clean code mejor agregar import.
+    // Como limitation de replace_file_content, agregaré el recurso aquí y asumiré que importare 'aws_dynamodb' como 'dynamodb'.
+    // PERO espera, no tengo el import 'dynamodb' en los imports actuales.
+    // Usaré 'aws-cdk-lib/aws-dynamodb'
+    
+    const usersTable = new cdk.aws_dynamodb.Table(this, 'UsersTable', {
+        partitionKey: { name: 'pk', type: cdk.aws_dynamodb.AttributeType.STRING },
+        billingMode: cdk.aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+        removalPolicy: cdk.RemovalPolicy.RETAIN, // PRODUCCIÓN: Mantiene la tabla incluso si se destruye el stack
+    });
+    
+    // Global Secondary Index para buscar por email
+    usersTable.addGlobalSecondaryIndex({
+        indexName: 'EmailIndex',
+        partitionKey: { name: 'email', type: cdk.aws_dynamodb.AttributeType.STRING },
+        projectionType: cdk.aws_dynamodb.ProjectionType.ALL,
+    });
+
     /**
      * LAMBDA 1: Registro de Usuarios
      * 
@@ -62,7 +87,13 @@ export class CleanArchStack extends cdk.Stack {
         bundling: { 
             minify: true, // Reduce el tamaño del archivo final eliminando espacios y renonbrando variables.
         },
+        environment: {
+            USERS_TABLE: usersTable.tableName,
+        },
     });
+    
+    // Damos permisos a la Lambda para escribir en la tabla
+    usersTable.grantReadWriteData(registerUserLambda);
 
     /**
      * LAMBDA 2: Crear Órden
@@ -76,6 +107,7 @@ export class CleanArchStack extends cdk.Stack {
         entry: path.join(__dirname, '../../src/lambdaMain.ts'),
         handler: 'createOrderHandler', // <-- Aquí cambiamos el handler para ejecutar otra lógica
         bundling: { minify: true },
+        // Por ahora Orders no usa Dynamo, pero podríamos pasarlo si fuera necesario
     });
 
     // ========================================================================

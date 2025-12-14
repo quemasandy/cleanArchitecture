@@ -55,7 +55,7 @@ export class MongoUserRepository implements IUserRepository {
     return user;
   }
 
-  async update(user: User): Promise<void> {
+  async update(user: User): Promise<User> {
     const userDoc = MongoUserMapper.toPersistence(user);
     
     // OPTIMISTIC LOCKING:
@@ -92,6 +92,9 @@ export class MongoUserRepository implements IUserRepository {
     // Si pasa, actualizamos la "DB"
     (MongoUserRepository as any)._SIMULATED_DB_VERSION = user.version + 1;
     console.log(`[Mongo Driver] UPDATE SUCCESS. New Version in DB: ${(MongoUserRepository as any)._SIMULATED_DB_VERSION}`);
+    
+    // Devolvemos el usuario actualizado
+    return new User(user.id, user.email, user.passwordHash, user.isActive, user.version + 1);
   }
 
   async findByEmail(email: string): Promise<User | null> {

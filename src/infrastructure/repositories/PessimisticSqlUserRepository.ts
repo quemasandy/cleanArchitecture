@@ -65,7 +65,7 @@ export class PessimisticSqlUserRepository implements IUserRepository {
   /**
    * Al hacer update, liberamos el candado al final de la transacción.
    */
-  async update(user: User): Promise<void> {
+  async update(user: User): Promise<User> {
     console.log(`[Pessimistic Repo] Realizando UPDATE seguro...`);
     
     // Simular tiempo de procesamiento (User thinking time o proceso pesado)
@@ -76,6 +76,7 @@ export class PessimisticSqlUserRepository implements IUserRepository {
     
     console.log(`[Pessimistic Repo] Update terminado. Liberando candado.`);
     this.releaseLock(user.id);
+    return user;
   }
 
   // --- MÉTODOS DE AYUDA PARA SIMULAR DB LOCKING ---
