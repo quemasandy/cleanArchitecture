@@ -19,7 +19,7 @@ export class UserSerializer {
     console.log('[UserSerializer][serialize][user]', user.id);
     return {
       id: user.id,
-      email: user.email,
+      email: user.email.getValue(),
       status: user.isActive ? 'Active' : 'Inactive',
       // NO devolvemos passwordHash
     };

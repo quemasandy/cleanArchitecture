@@ -1,5 +1,5 @@
 {
-  "body": "{\"email\": \"test@example.com\", \"password\": \"secureExtension123\"}",
+  "body": "{\"email\": \"andy@gmail.com\", \"password\": \"superSecret\"}",
   "httpMethod": "POST",
   "path": "/users",
   "headers": {

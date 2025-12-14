@@ -14,8 +14,8 @@ import { registerUserHandler, createOrderHandler } from '../src/main';
 // Evento simulado (Mock) - Cambia estos valores según lo que quieras probar
 const mockEvent = {
     body: JSON.stringify({
-        email: "local-test@example.com",
-        password: "SecurePassword123"
+        email: "luigy@gmail.com",
+        password: "superSecret"
     }),
     httpMethod: "POST",
     path: "/users",
