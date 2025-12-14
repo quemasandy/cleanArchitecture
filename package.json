@@ -9,7 +9,8 @@
     "local:setup": "./scripts/setup-dynamodb-local.sh",
     "local:start": "docker-compose up -d",
     "local:stop": "docker-compose down",
-    "local:dynamodb-admin": "DYNAMO_ENDPOINT=http://localhost:8000 dynamodb-admin"
+    "local:dynamodb-admin": "DYNAMO_ENDPOINT=http://localhost:8000 dynamodb-admin",
+    "update:context": "python3 scripts/generate_context.py"
   },
   "repository": {
     "type": "git",
