@@ -29,3 +29,13 @@ Patrón: `{función}-{env}`
 | `dev` | `register-user-dev`, `create-order-dev` |
 | `stg` | `register-user-stg`, `create-order-stg` |
 | `prd` | `register-user-prd`, `create-order-prd` |
+
+### Naming Convention de DynamoDB
+
+Patrón: `{tabla}-{env}`
+
+| Ambiente | Ejemplos |
+|----------|----------|
+| `dev` | `users-dev` |
+| `stg` | `users-stg` |
+| `prd` | `users-prd` |

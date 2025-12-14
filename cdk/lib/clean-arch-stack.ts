@@ -60,6 +60,9 @@ export class CleanArchStack extends cdk.Stack {
     // Usaré 'aws-cdk-lib/aws-dynamodb'
     
     const usersTable = new cdk.aws_dynamodb.Table(this, 'UsersTable', {
+        // tableName: Nombre personalizado de la tabla en DynamoDB (sin sufijos autogenerados)
+        // Formato: users-{env} → Ej: users-dev, users-prd
+        tableName: `users-${env}`,
         partitionKey: { name: 'pk', type: cdk.aws_dynamodb.AttributeType.STRING },
         billingMode: cdk.aws_dynamodb.BillingMode.PAY_PER_REQUEST,
         removalPolicy: cdk.RemovalPolicy.RETAIN, // PRODUCCIÓN: Mantiene la tabla incluso si se destruye el stack

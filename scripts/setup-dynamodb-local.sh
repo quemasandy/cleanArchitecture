@@ -9,7 +9,7 @@ sleep 3
 
 echo "🛠️ Creando tabla UsersTable..."
 aws dynamodb create-table \
-  --table-name local-users-table \
+  --table-name users-local \
   --attribute-definitions \
     AttributeName=pk,AttributeType=S \
     AttributeName=email,AttributeType=S \
