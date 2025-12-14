@@ -15,8 +15,22 @@ export class DynamoDbUserRepository implements IUserRepository {
   private readonly tableName: string;
 
   constructor(tableName: string) {
-    // Inicializamos el cliente. En Lambda, la región se infiere del entorno.
-    const client = new DynamoDBClient({});
+    // Si DYNAMODB_ENDPOINT está definido, usamos DynamoDB Local
+    const endpoint = process.env.DYNAMODB_ENDPOINT;
+    
+    const clientConfig = endpoint 
+      ? { 
+          endpoint, 
+          region: 'us-east-1',
+          // DynamoDB Local requiere credenciales (aunque sean dummy)
+          credentials: {
+            accessKeyId: 'local',
+            secretAccessKey: 'local'
+          }
+        }
+      : {};                                  // AWS: configuración automática
+    
+    const client = new DynamoDBClient(clientConfig);
     this.docClient = DynamoDBDocumentClient.from(client, {
       marshallOptions: { removeUndefinedValues: true }
     });
@@ -76,21 +90,30 @@ export class DynamoDbUserRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     // Usamos el GSI 'EmailIndex'
-    const result = await this.docClient.send(new QueryCommand({
-      TableName: this.tableName,
-      IndexName: 'EmailIndex',
-      KeyConditionExpression: 'email = :email',
-      ExpressionAttributeValues: {
-        ':email': email
-      },
-      Limit: 1
-    }));
+    console.log(`[DynamoDB] findByEmail: Buscando email=${email} en tabla=${this.tableName}, endpoint=${process.env.DYNAMODB_ENDPOINT}`);
+    
+    try {
+      const result = await this.docClient.send(new QueryCommand({
+        TableName: this.tableName,
+        IndexName: 'EmailIndex',
+        KeyConditionExpression: 'email = :email',
+        ExpressionAttributeValues: {
+          ':email': email
+        },
+        Limit: 1
+      }));
 
-    if (!result.Items || result.Items.length === 0) {
-      return null;
+      console.log(`[DynamoDB] findByEmail: Resultado Items=${result.Items?.length || 0}`);
+      
+      if (!result.Items || result.Items.length === 0) {
+        return null;
+      }
+
+      return DynamoUserMapper.toDomain(result.Items[0] as DynamoUserItem);
+    } catch (error: any) {
+      console.error(`[DynamoDB] findByEmail ERROR:`, error.name, error.message);
+      throw error;
     }
-
-    return DynamoUserMapper.toDomain(result.Items[0] as DynamoUserItem);
   }
 
   async findById(id: string): Promise<User | null> {

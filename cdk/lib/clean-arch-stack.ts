@@ -32,6 +32,15 @@ export class CleanArchStack extends cdk.Stack {
     super(scope, id, props);
 
     // ========================================================================
+    // 0. CONFIGURACIÓN DEL AMBIENTE
+    // ========================================================================
+    
+    // env: Ambiente de despliegue (local | dev | stg | prd)
+    // Se obtiene del CDK context: npx cdk deploy -c env=prd
+    // Si no se especifica, usa 'dev' por defecto.
+    const env = this.node.tryGetContext('env') || 'dev';
+
+    // ========================================================================
     // 1. DEFINICIÓN DE FUNCIONES LAMBDA
     // ========================================================================
     
@@ -72,6 +81,10 @@ export class CleanArchStack extends cdk.Stack {
      * 3. Crea el archivo .zip optimizado.
      */
     const registerUserLambda = new nodejs.NodejsFunction(this, 'RegisterUserLambda', {
+        // functionName: Nombre personalizado de la Lambda en AWS (sin los sufijos autogenerados).
+        // Formato: {nombre-función}-{env} → Ej: register-user-dev, register-user-prd
+        functionName: `register-user-${env}`,
+        
         // Runtime: Versión de Node.js. Debe coincidir con lo que probamos en local.
         runtime: lambda.Runtime.NODEJS_20_X,
         
@@ -103,6 +116,10 @@ export class CleanArchStack extends cdk.Stack {
      * AWS Lambda solo cargará en memoria el código necesario.
      */
     const createOrderLambda = new nodejs.NodejsFunction(this, 'CreateOrderLambda', {
+        // functionName: Nombre personalizado de la Lambda en AWS (sin los sufijos autogenerados).
+        // Formato: {nombre-función}-{env} → Ej: create-order-dev, create-order-prd
+        functionName: `create-order-${env}`,
+        
         runtime: lambda.Runtime.NODEJS_20_X,
         entry: path.join(__dirname, '../../src/main.ts'),
         handler: 'createOrderHandler', // <-- Aquí cambiamos el handler para ejecutar otra lógica

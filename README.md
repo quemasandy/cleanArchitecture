@@ -64,3 +64,58 @@ You will see logs indicating the flow through the layers:
 2.  **Domain Service** executes logic.
 3.  **Infrastructure** performs external actions (SQL, Mongo, API calls).
 4.  **View** renders the result.
+
+## 🐛 Debugging
+
+### Opción 1: TypeScript Directo (Recomendado) ⚡
+
+El método más rápido para desarrollo diario:
+
+1. Inicia DynamoDB Local (si no está corriendo):
+   ```bash
+   npm run local:start
+   ```
+
+2. Pon un **breakpoint** en cualquier archivo `.ts`
+
+3. Presiona **F5** → selecciona **"TS: Debug Local (Sin Docker)"**
+
+4. El script `scripts/local-run.ts` se ejecutará con el debugger conectado
+
+**Ventaja**: No necesitas Docker para SAM ni regenerar `template.yaml`.
+
+---
+
+### Opción 2: SAM + Docker (Más realista)
+
+Para probar en un entorno más parecido a AWS Lambda:
+
+```bash
+cd cdk
+sam local invoke RegisterUserLambda -t template.yaml -e ../events/event-register.json -d 5858
+```
+
+Luego en VS Code:
+1. Pon un breakpoint en tu código (`src/main.ts`)
+2. Presiona **F5** → selecciona **"SAM: Debug Lambda"**
+3. VS Code se conectará al contenedor Docker
+
+---
+
+## 🗄️ DynamoDB Local
+
+### Comandos disponibles
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run local:setup` | Inicia DynamoDB Local y crea las tablas |
+| `npm run local` | Ejecuta la Lambda localmente |
+| `npm run local:start` | Solo inicia DynamoDB Local |
+| `npm run local:stop` | Detiene DynamoDB Local |
+
+### Verificar tablas
+
+```bash
+aws dynamodb list-tables --endpoint-url http://localhost:8000
+aws dynamodb scan --table-name local-users-table --endpoint-url http://localhost:8000
+```

@@ -4,7 +4,11 @@
   "description": "This directory contains a comprehensive, didactic example of **Clean Architecture**.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "local": "npx tsx scripts/local-run.ts",
+    "local:setup": "./scripts/setup-dynamodb-local.sh",
+    "local:start": "docker-compose up -d",
+    "local:stop": "docker-compose down"
   },
   "repository": {
     "type": "git",
@@ -20,6 +24,7 @@
   "homepage": "https://github.com/quemasandy/cleanArchitecture#readme",
   "devDependencies": {
     "@types/node": "^25.0.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
   "dependencies": {
