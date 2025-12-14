@@ -1,0 +1,523 @@
+Resources:
+  UsersTable9725E9C8:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: email
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      GlobalSecondaryIndexes:
+        - IndexName: EmailIndex
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+    Metadata:
+      aws:cdk:path: CleanArchStack/UsersTable/Resource
+  RegisterUserLambdaServiceRole3F6DEB8E:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: CleanArchStack/RegisterUserLambda/ServiceRole/Resource
+  RegisterUserLambdaServiceRoleDefaultPolicy56491F2D:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action:
+              - dynamodb:BatchGetItem
+              - dynamodb:BatchWriteItem
+              - dynamodb:ConditionCheckItem
+              - dynamodb:DeleteItem
+              - dynamodb:DescribeTable
+              - dynamodb:GetItem
+              - dynamodb:GetRecords
+              - dynamodb:GetShardIterator
+              - dynamodb:PutItem
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:UpdateItem
+            Effect: Allow
+            Resource:
+              - Fn::GetAtt:
+                  - UsersTable9725E9C8
+                  - Arn
+              - Fn::Join:
+                  - ""
+                  - - Fn::GetAtt:
+                        - UsersTable9725E9C8
+                        - Arn
+                    - /index/*
+        Version: "2012-10-17"
+      PolicyName: RegisterUserLambdaServiceRoleDefaultPolicy56491F2D
+      Roles:
+        - Ref: RegisterUserLambdaServiceRole3F6DEB8E
+    Metadata:
+      aws:cdk:path: CleanArchStack/RegisterUserLambda/ServiceRole/DefaultPolicy/Resource
+  RegisterUserLambda8E982A69:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: 1522553b9e259bd41d98b9d94a88ed6e77b04355e357ffac5800a10c56d1b632.zip
+      Environment:
+        Variables:
+          USERS_TABLE:
+            Ref: UsersTable9725E9C8
+      Handler: index.registerUserHandler
+      Role:
+        Fn::GetAtt:
+          - RegisterUserLambdaServiceRole3F6DEB8E
+          - Arn
+      Runtime: nodejs20.x
+    DependsOn:
+      - RegisterUserLambdaServiceRoleDefaultPolicy56491F2D
+      - RegisterUserLambdaServiceRole3F6DEB8E
+    Metadata:
+      aws:cdk:path: CleanArchStack/RegisterUserLambda/Resource
+      aws:asset:path: /Users/andy/Learning/cleanArchitecture/cdk/cdk.out/asset.1522553b9e259bd41d98b9d94a88ed6e77b04355e357ffac5800a10c56d1b632
+      aws:asset:is-bundled: true
+      aws:asset:property: Code
+  CreateOrderLambdaServiceRole7964EC37:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: "2012-10-17"
+      ManagedPolicyArns:
+        - Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - :iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+    Metadata:
+      aws:cdk:path: CleanArchStack/CreateOrderLambda/ServiceRole/Resource
+  CreateOrderLambda3AC388D1:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        S3Bucket:
+          Fn::Sub: cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}
+        S3Key: 1522553b9e259bd41d98b9d94a88ed6e77b04355e357ffac5800a10c56d1b632.zip
+      Handler: index.createOrderHandler
+      Role:
+        Fn::GetAtt:
+          - CreateOrderLambdaServiceRole7964EC37
+          - Arn
+      Runtime: nodejs20.x
+    DependsOn:
+      - CreateOrderLambdaServiceRole7964EC37
+    Metadata:
+      aws:cdk:path: CleanArchStack/CreateOrderLambda/Resource
+      aws:asset:path: /Users/andy/Learning/cleanArchitecture/cdk/cdk.out/asset.1522553b9e259bd41d98b9d94a88ed6e77b04355e357ffac5800a10c56d1b632
+      aws:asset:is-bundled: true
+      aws:asset:property: Code
+  CleanArchApiAA709742:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: This service serves Clean Architecture operations.
+      Name: Clean Architecture Service
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Resource
+  CleanArchApiDeployment0B921EFC0b839aaf7ec002cc2f9d25009f7d5d6b:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      Description: This service serves Clean Architecture operations.
+      RestApiId:
+        Ref: CleanArchApiAA709742
+    DependsOn:
+      - CleanArchApiordersPOST6C08C992
+      - CleanArchApiorders4893B521
+      - CleanArchApiusersPOSTD9973F7D
+      - CleanArchApiusers2C19DF74
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Deployment/Resource
+      aws:cdk:do-not-refactor: true
+  CleanArchApiDeploymentStagedev82B4A2FC:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      DeploymentId:
+        Ref: CleanArchApiDeployment0B921EFC0b839aaf7ec002cc2f9d25009f7d5d6b
+      RestApiId:
+        Ref: CleanArchApiAA709742
+      StageName: dev
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/DeploymentStage.dev/Resource
+  CleanArchApiusers2C19DF74:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+          - CleanArchApiAA709742
+          - RootResourceId
+      PathPart: users
+      RestApiId:
+        Ref: CleanArchApiAA709742
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Default/users/Resource
+  CleanArchApiusersPOSTApiPermissionCleanArchStackCleanArchApi5C32BDD0POSTusers9F5D0E19:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - RegisterUserLambda8E982A69
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: CleanArchApiAA709742
+            - /
+            - Ref: CleanArchApiDeploymentStagedev82B4A2FC
+            - /POST/users
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Default/users/POST/ApiPermission.CleanArchStackCleanArchApi5C32BDD0.POST..users
+  CleanArchApiusersPOSTApiPermissionTestCleanArchStackCleanArchApi5C32BDD0POSTusers905FCFF6:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - RegisterUserLambda8E982A69
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: CleanArchApiAA709742
+            - /test-invoke-stage/POST/users
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Default/users/POST/ApiPermission.Test.CleanArchStackCleanArchApi5C32BDD0.POST..users
+  CleanArchApiusersPOSTD9973F7D:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - RegisterUserLambda8E982A69
+                  - Arn
+              - /invocations
+      ResourceId:
+        Ref: CleanArchApiusers2C19DF74
+      RestApiId:
+        Ref: CleanArchApiAA709742
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Default/users/POST/Resource
+  CleanArchApiorders4893B521:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      ParentId:
+        Fn::GetAtt:
+          - CleanArchApiAA709742
+          - RootResourceId
+      PathPart: orders
+      RestApiId:
+        Ref: CleanArchApiAA709742
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Default/orders/Resource
+  CleanArchApiordersPOSTApiPermissionCleanArchStackCleanArchApi5C32BDD0POSTorders1666C013:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - CreateOrderLambda3AC388D1
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: CleanArchApiAA709742
+            - /
+            - Ref: CleanArchApiDeploymentStagedev82B4A2FC
+            - /POST/orders
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Default/orders/POST/ApiPermission.CleanArchStackCleanArchApi5C32BDD0.POST..orders
+  CleanArchApiordersPOSTApiPermissionTestCleanArchStackCleanArchApi5C32BDD0POSTorders90F95B3C:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - CreateOrderLambda3AC388D1
+          - Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Join:
+          - ""
+          - - "arn:"
+            - Ref: AWS::Partition
+            - ":execute-api:"
+            - Ref: AWS::Region
+            - ":"
+            - Ref: AWS::AccountId
+            - ":"
+            - Ref: CleanArchApiAA709742
+            - /test-invoke-stage/POST/orders
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Default/orders/POST/ApiPermission.Test.CleanArchStackCleanArchApi5C32BDD0.POST..orders
+  CleanArchApiordersPOST6C08C992:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      ApiKeyRequired: true
+      AuthorizationType: NONE
+      HttpMethod: POST
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri:
+          Fn::Join:
+            - ""
+            - - "arn:"
+              - Ref: AWS::Partition
+              - ":apigateway:"
+              - Ref: AWS::Region
+              - :lambda:path/2015-03-31/functions/
+              - Fn::GetAtt:
+                  - CreateOrderLambda3AC388D1
+                  - Arn
+              - /invocations
+      ResourceId:
+        Ref: CleanArchApiorders4893B521
+      RestApiId:
+        Ref: CleanArchApiAA709742
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/Default/orders/POST/Resource
+  CleanArchApiApiKey20281419:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Description: Llave para acceder a la API de Clean Architecture
+      Enabled: true
+      Name: CleanArchApiKey
+      StageKeys:
+        - RestApiId:
+            Ref: CleanArchApiAA709742
+          StageName:
+            Ref: CleanArchApiDeploymentStagedev82B4A2FC
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/ApiKey/Resource
+  CleanArchApiUsagePlan5F6F244D:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+        - ApiId:
+            Ref: CleanArchApiAA709742
+          Stage:
+            Ref: CleanArchApiDeploymentStagedev82B4A2FC
+          Throttle: {}
+      Throttle:
+        BurstLimit: 2
+        RateLimit: 10
+      UsagePlanName: StandardPlan
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/UsagePlan/Resource
+  CleanArchApiUsagePlanUsagePlanKeyResourceCleanArchStackCleanArchApiApiKeyC692B277034AD59E:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId:
+        Ref: CleanArchApiApiKey20281419
+      KeyType: API_KEY
+      UsagePlanId:
+        Ref: CleanArchApiUsagePlan5F6F244D
+    Metadata:
+      aws:cdk:path: CleanArchStack/CleanArchApi/UsagePlan/UsagePlanKeyResource:CleanArchStackCleanArchApiApiKeyC692B277
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/22QT2+DMAzFP0vvqbeBNGlH2mmXaltFtzMy4DJDSBAOQwjx3acE9uew0/s9K362E0EURxDtcJR9UTZ7zTnMF4dFo3CUbC4ng60tc5jfMNekjlcTYFEa27zEzNiSaoGXIE+DKRxboxhbmFO7NgQ9W83F5O1Ki5I4QxFyAokXJTEchqIhd0ChLR7m49X8pPpm6lsWYWsWhR1X6GjECeaUxCUdh3EbPlKn7dSScb76x10cVmGxFVISO/QFhbHfZgta+Znchy19aaOk4xOFYzZ6F6zorDHs+L850bQsv/nhZr8Am8q/ex1cN7hF+f+EWm4+o1u4e4D7XS3M+34wjluCdNUvUi3fZLYBAAA=
+    Metadata:
+      aws:cdk:path: CleanArchStack/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Outputs:
+  CleanArchApiEndpoint8386284F:
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - Ref: CleanArchApiAA709742
+          - .execute-api.
+          - Ref: AWS::Region
+          - "."
+          - Ref: AWS::URLSuffix
+          - /
+          - Ref: CleanArchApiDeploymentStagedev82B4A2FC
+          - /
+  ApiUrl:
+    Description: The URL of the API Gateway
+    Value:
+      Fn::Join:
+        - ""
+        - - https://
+          - Ref: CleanArchApiAA709742
+          - .execute-api.
+          - Ref: AWS::Region
+          - "."
+          - Ref: AWS::URLSuffix
+          - /
+          - Ref: CleanArchApiDeploymentStagedev82B4A2FC
+          - /
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - af-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-3
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-4
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-2
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - il-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+      - Fn::Equals:
+          - Ref: AWS::Region
+          - us-west-2
+Parameters:
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
+

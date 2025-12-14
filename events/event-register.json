@@ -1,0 +1,8 @@
+{
+  "body": "{\"email\": \"test@example.com\", \"password\": \"secureExtension123\"}",
+  "httpMethod": "POST",
+  "path": "/users",
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}

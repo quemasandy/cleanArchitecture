@@ -1,91 +1,94 @@
+import 'dotenv/config'; // Carga variables de .env si existe (útil para local)
 /**
  * Archivo: main.ts
- * UBICACIÓN: Raíz de la Aplicación (Composition Root)
- *
- * Aquí es donde ocurre la MAGIA de la Inyección de Dependencias.
- * Decidimos QUÉ implementaciones usar sin tocar el código de negocio.
- *
- * - Para quién trabaja: El equipo de Desarrollo / DevOps.
- * - Intención: Componer el grafo de dependencias de la aplicación.
- * - Misión: Inicializar e inyectar las dependencias correctas para el entorno actual.
+ * UBICACIÓN: Raíz (Composition Root para AWS Lambda)
+ * 
+ * Este archivo es el punto de entrada principal para AWS Lambda.
+ * Su responsabilidad es componer el grafo de dependencias y exportar los handlers.
  */
 
-// Importamos Interfaces (Puertos)
+import { ApiGatewayAdapter } from './presentation/lambda/ApiGatewayAdapter';
+import { CapturingView } from './presentation/lambda/CapturingView';
+
+// Importamos Interfaces
 import { IUserRepository } from './domain/interfaces/IUserRepository';
 import { IEmailService } from './domain/interfaces/IEmailService';
 import { IPaymentGateway } from './domain/interfaces/IPaymentGateway';
 import { IQueueService } from './domain/interfaces/IQueueService';
 
-// Importamos Implementaciones (Adaptadores)
-import { SqlUserRepository } from './infrastructure/repositories/SqlUserRepository';
-import { MongoUserRepository } from './infrastructure/repositories/MongoUserRepository';
-import { SmtpEmailClient } from './infrastructure/email/SmtpEmailClient';
+// Importamos Implementaciones (Mocks para Lambda/Pruebas)
+import { InMemoryUserRepository } from './infrastructure/repositories/InMemoryUserRepository';
+// Podemos reutilizar implementaciones reales o mocks según la config
+import { SmtpEmailClient } from './infrastructure/email/SmtpEmailClient'; 
 import { CybersourcePaymentGateway } from './infrastructure/payment/CybersourcePaymentGateway';
-import { LyraPaymentGateway } from './infrastructure/payment/LyraPaymentGateway';
 import { AwsSqsClient } from './infrastructure/queue/AwsSqsClient';
-import { RabbitMqClient } from './infrastructure/queue/RabbitMqClient';
 
-// Importamos Servicios de Dominio
+// Servicios
 import { UserService } from './domain/services/UserService';
 import { OrderService } from './domain/services/OrderService';
 
-// Importamos Controladores y Vistas
+// Controladores
 import { UserController } from './presentation/controllers/UserController';
 import { OrderController } from './presentation/controllers/OrderController';
-import { ConsoleView } from './presentation/views/ConsoleView';
 
-async function main() {
-  console.log("🚀 Iniciando Sistema con Arquitectura Limpia...\n");
+// --- COMPOSICIÓN DEL GRAFO (Singleton fuera del handler para reutilización) ---
 
-  // 1. CAPA DE INFRAESTRUCTURA (Elegimos las herramientas)
-  // Podemos cambiar estas líneas y TODO el sistema cambia de tecnología
-  // sin tocar una sola línea de lógica de negocio.
-  
-  // const userRepo: IUserRepository = new SqlUserRepository(); // Opción A
-  const userRepo: IUserRepository = new MongoUserRepository(); // Opción B
+// 1. Infraestructura
+// NOTA: Usamos InMemory para probar que la Lambda funciona sin depender de DB externa por ahora.
+// En producción, aquí instanciarías MongoUserRepository o DynamoDBUserRepository
+import { DynamoDbUserRepository } from './infrastructure/repositories/DynamoDbUserRepository';
 
-  const emailService: IEmailService = new SmtpEmailClient();
-  
-  // const paymentGateway: IPaymentGateway = new CybersourcePaymentGateway(); // Opción A
-  const paymentGateway: IPaymentGateway = new LyraPaymentGateway(); // Opción B
-
-  const queueService: IQueueService = new AwsSqsClient();
-  // const queueService: IQueueService = new RabbitMqClient();
-
-  // 2. CAPA DE DOMINIO (Inyectamos las herramientas)
-  const userService = new UserService(userRepo, emailService);
-  const orderService = new OrderService(paymentGateway, queueService, emailService);
-
-  // 3. CAPA DE PRESENTACIÓN (Conectamos con el mundo exterior)
-  const view = new ConsoleView();
-  const userController = new UserController(userService, view);
-  const orderController = new OrderController(orderService, view);
-
-  // --- SIMULACIÓN DE USO ---
-
-  // CASO 1: Registrar Usuario
-  console.log("Llamo [userController.register]");
-  await userController.register({ 
-    email: "andy@gmail.com", 
-    // email: "andy@evil.com", 
-    password: "superSecurePassword" 
-  });
-
-  // CASO 2: Crear Orden con Items (Ejemplo de Agregado)
-  await orderController.createOrder({
-    userId: "user_123",
-    items: [
-      { productId: "p1", price: 50.00, quantity: 1 },
-      { productId: "p2", price: 100.00, quantity: 1 } // Total should be 150.00
-    ],
-    paymentSource: "tok_visa_4242"
-  });
-
-  // CASO 3: Intento de registro fallido (Regla de Negocio)
-  await userController.register({ 
-    email: "hacker@evil.com", 
-    password: "123" 
-  });
+// 1. Infraestructura
+const usersTable = process.env.USERS_TABLE;
+if (!usersTable) {
+    throw new Error("USERS_TABLE environment variable is not set. DynamoDbUserRepository requires a table name.");
 }
+const userRepo: IUserRepository = new DynamoDbUserRepository(usersTable); 
+const emailService: IEmailService = new SmtpEmailClient();
+// Nota: Puedes crear versiones Mock de Payment y Queue si no quieres credenciales reales aun
+const paymentGateway: IPaymentGateway = new CybersourcePaymentGateway(); 
+const queueService: IQueueService = new AwsSqsClient();
 
-main().catch(console.error);
+// 2. Dominio
+const userService = new UserService(userRepo, emailService);
+const orderService = new OrderService(paymentGateway, queueService, emailService);
+
+// 3. Presentación
+// Usamos CapturingView para poder devolver la respuesta HTTP
+const view = new CapturingView();
+const userController = new UserController(userService, view);
+const orderController = new OrderController(orderService, view);
+
+// --- HANDLERS EXPORTADOS ---
+
+/**
+ * Handler para registrar usuarios via API Gateway
+ * Event: POST /users
+ */
+export const registerUserHandler = async (event: any) => {
+    return ApiGatewayAdapter.handle(async (body) => {
+        view.reset();
+        await userController.register(body);
+        
+        if (view.hasError) {
+            throw new Error(view.lastError || "Unknown Error");
+        }
+        return view.lastSuccess;
+    }, event);
+};
+
+/**
+ * Handler para crear órdenes via API Gateway
+ * Event: POST /orders
+ */
+export const createOrderHandler = async (event: any) => {
+    return ApiGatewayAdapter.handle(async (body) => {
+        view.reset();
+        await orderController.createOrder(body);
+
+        if (view.hasError) {
+             throw new Error(view.lastError || "Unknown Error");
+        }
+        return view.lastSuccess;
+    }, event);
+};

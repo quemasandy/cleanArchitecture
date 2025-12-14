@@ -78,7 +78,7 @@ export class CleanArchStack extends cdk.Stack {
         // Entry: ¿Dónde está el código fuente?
         // __dirname es la carpeta actual (cdk/lib).
         // Subimos dos niveles (../../) para llegar a la raíz y entramos a 'src'.
-        entry: path.join(__dirname, '../../src/lambdaMain.ts'),
+        entry: path.join(__dirname, '../../src/main.ts'),
         
         // Handler: ¿Qué función exportada dentro de ese archivo se debe ejecutar?
         handler: 'registerUserHandler',
@@ -98,13 +98,13 @@ export class CleanArchStack extends cdk.Stack {
     /**
      * LAMBDA 2: Crear Órden
      * 
-     * Observa que usamos EL MISMO archivo de entrada (lambdaMain.ts).
+     * Observa que usamos EL MISMO archivo de entrada (main.ts).
      * Esto es eficiente porque reutilizamos lógica de dominio.
      * AWS Lambda solo cargará en memoria el código necesario.
      */
     const createOrderLambda = new nodejs.NodejsFunction(this, 'CreateOrderLambda', {
         runtime: lambda.Runtime.NODEJS_20_X,
-        entry: path.join(__dirname, '../../src/lambdaMain.ts'),
+        entry: path.join(__dirname, '../../src/main.ts'),
         handler: 'createOrderHandler', // <-- Aquí cambiamos el handler para ejecutar otra lógica
         bundling: { minify: true },
         // Por ahora Orders no usa Dynamo, pero podríamos pasarlo si fuera necesario
