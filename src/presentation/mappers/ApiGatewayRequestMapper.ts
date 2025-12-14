@@ -1,6 +1,6 @@
 /**
  * Archivo: ApiGatewayRequestMapper.ts
- * UBICACIÓN: Capa de Presentación / Serializers
+ * UBICACIÓN: Capa de Presentación / Mappers
  *
  * Mapper para transformar eventos de API Gateway a DTOs.
  * AWS envía el body como string JSON, este mapper lo convierte a objetos tipados.

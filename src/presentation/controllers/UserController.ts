@@ -16,7 +16,7 @@
 
 import { UserService } from '../../domain/services/UserService';
 import { UserSerializer } from '../serializers/UserSerializer';
-import { ApiGatewayRequestMapper } from '../serializers/ApiGatewayRequestMapper';
+import { ApiGatewayRequestMapper } from '../mappers/ApiGatewayRequestMapper';
 import { LambdaView, ApiGatewayResponse } from '../views/LambdaView';
 
 export class UserController {

@@ -15,7 +15,7 @@
  */
 
 import { OrderService } from '../../domain/services/OrderService';
-import { ApiGatewayRequestMapper } from '../serializers/ApiGatewayRequestMapper';
+import { ApiGatewayRequestMapper } from '../mappers/ApiGatewayRequestMapper';
 import { LambdaView, ApiGatewayResponse } from '../views/LambdaView';
 
 export class OrderController {
