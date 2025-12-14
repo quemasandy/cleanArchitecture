@@ -1,3 +1,4 @@
+import 'dotenv/config'; // Carga variables de .env si existe (útil para local)
 /**
  * Archivo: lambdaMain.ts
  * UBICACIÓN: Raíz (Composition Root para AWS Lambda)
