@@ -51,6 +51,9 @@ export class DynamoDbUserRepository implements IUserRepository {
       Item: item
     }));
 
+    // La aplicación genera todos los datos (como el ID) antes de guardar, actuando como la fuente de la verdad 
+    // y haciendo redundante volver a leerlos. Retornar el objeto en memoria evita una consulta extra a la base de datos, 
+    // ahorrando costos y latencia.
     return user;
   }
 
