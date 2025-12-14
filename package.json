@@ -8,7 +8,8 @@
     "local": "npx tsx scripts/local-run.ts",
     "local:setup": "./scripts/setup-dynamodb-local.sh",
     "local:start": "docker-compose up -d",
-    "local:stop": "docker-compose down"
+    "local:stop": "docker-compose down",
+    "local:dynamodb-admin": "DYNAMO_ENDPOINT=http://localhost:8000 dynamodb-admin"
   },
   "repository": {
     "type": "git",
@@ -24,6 +25,7 @@
   "homepage": "https://github.com/quemasandy/cleanArchitecture#readme",
   "devDependencies": {
     "@types/node": "^25.0.2",
+    "dynamodb-admin": "^5.1.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
