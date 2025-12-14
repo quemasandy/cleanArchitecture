@@ -33,3 +33,33 @@ Patrón: `{función}-{env}`
 | `dev` | `register-user-dev`, `create-order-dev` |
 | `stg` | `register-user-stg`, `create-order-stg` |
 | `prd` | `register-user-prd`, `create-order-prd` |
+
+---
+
+## Reglas de Clean Architecture
+
+> **IMPORTANTE**: Este proyecto DEBE respetar las normas de Clean Architecture.
+
+### Capas y Responsabilidades
+
+| Capa | Responsabilidad | Ejemplos |
+|------|----------------|----------|
+| **Domain** | Lógica de negocio pura | Entities, Services, Interfaces, Value Objects |
+| **Infrastructure** | Implementaciones concretas | Repositories, Email Clients, Payment Gateways |
+| **Presentation** | Entrada/salida HTTP | Controllers, Views, Serializers, DTOs |
+
+### Reglas de Dependencia
+
+- **Domain** NO depende de nada externo
+- **Infrastructure** implementa interfaces de Domain
+- **Presentation** usa servicios de Domain
+
+### Responsabilidades
+
+| Componente | Hace | NO Hace |
+|------------|------|---------|
+| **View** | Formatear respuestas | Parsear inputs |
+| **RequestMapper** | Deserializar inputs a DTOs | Lógica de negocio |
+| **Controller** | Orquestar flujo | Persistencia directa |
+| **Service** | Lógica de negocio | Acceso directo a DB |
+| **Repository** | Persistencia | Lógica de negocio |

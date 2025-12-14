@@ -1,35 +1,39 @@
 /**
  * Archivo: UserController.ts
- * UBICACIÓN: Capa de Presentación / Controladores
+ * UBICACIÓN: Capa de Presentación / Controladores (Lambda)
  *
- * ¿QUÉ HACE UN CONTROLADOR?
- * - Recibe la petición (Request).
- * - Valida el formato de entrada (DTOs).
- * - Llama al Servicio de Dominio adecuado.
- * - Formatea la respuesta (Serializer).
- * - Retorna la respuesta (Response).
+ * Controlador específico para AWS Lambda + API Gateway.
+ * Recibe el evento completo de Lambda y maneja todo el ciclo:
+ * - Parseo del body
+ * - Validación de entrada
+ * - Delegación al servicio
+ * - Formateo de respuesta
  *
- * - Para quién trabaja: Cliente HTTP / API Consumer.
- * - Intención: Exponer el registro de usuarios.
- * - Misión: Manejar el ciclo de vida de la petición de registro, validando DTOs y formateando la salida.
+ * - Para quién trabaja: AWS API Gateway.
+ * - Intención: Exponer el registro de usuarios via Lambda.
+ * - Misión: Manejar el ciclo completo de la petición HTTP.
  */
 
 import { UserService } from '../../domain/services/UserService';
-import { RegisterUserDto } from '../dtos/RegisterUserDto';
 import { UserSerializer } from '../serializers/UserSerializer';
-import { ConsoleView } from '../views/ConsoleView';
+import { ApiGatewayRequestMapper } from '../serializers/ApiGatewayRequestMapper';
+import { LambdaView, ApiGatewayResponse } from '../views/LambdaView';
 
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly view: ConsoleView
+    private readonly view: LambdaView
   ) {}
 
-  async register(request: RegisterUserDto): Promise<void> {
+  async register(event: any): Promise<ApiGatewayResponse> {
     console.log("\n--- [Controller] Recibiendo solicitud de registro ---");
+    this.view.reset();
 
     try {
-      // 1. Validación básica de entrada (Input Validation)
+      // 1. Deserializar evento API Gateway a DTO
+      const request = ApiGatewayRequestMapper.toRegisterUserDto(event);
+
+      // 2. Validación básica de entrada
       console.log("[UserController][register] Validando entrada...");
       if (!request.email || !request.email.includes('@')) {
         throw new Error("Bad Request: Email inválido");
@@ -38,17 +42,19 @@ export class UserController {
         throw new Error("Bad Request: Password muy corto");
       }
 
-      // 2. Delegación al Servicio de Dominio
+      // 3. Delegación al Servicio de Dominio
       console.log("[UserController][register] Delegando al Servicio de Dominio...")
       const user = await this.userService.registerUser(request.email, request.password);
 
-      // 3. Serialización y Respuesta
+      // 4. Serialización y Respuesta
       const response = UserSerializer.serialize(user);
       this.view.renderSuccess(response);
 
     } catch (error: any) {
-      // 4. Manejo de Errores
-      this.view.renderError(error.message);
+      console.error("[UserController][register] Error:", error);
+      this.view.renderError(error.message || "Internal Server Error");
     }
+
+    return this.view.getResponse();
   }
 }
