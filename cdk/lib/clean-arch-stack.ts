@@ -175,8 +175,12 @@ export class CleanArchStack extends cdk.Stack {
     const plan = api.addUsagePlan('UsagePlan', {
       name: 'StandardPlan',
       throttle: {
-        rateLimit: 10,  // 10 peticiones por segundo
-        burstLimit: 2   // Ráfagas de hasta 2 peticiones
+        rateLimit: 1,   // 1 petición por segundo (valor bajo para pruebas)
+        burstLimit: 1   // Sin ráfagas permitidas
+      },
+      quota: {
+        limit: 25,                      // Máximo 25 peticiones por día (valor bajo para pruebas)
+        period: apigateway.Period.DAY   // Período de renovación: diario
       }
     });
 
@@ -202,7 +206,10 @@ export class CleanArchStack extends cdk.Stack {
     });
 
     const usersLogin = users.addResource('login');
-    usersLogin.addMethod('POST', new apigateway.LambdaIntegration(loginUserLambda));
+    // SEGURIDAD: Requiere API Key para prevenir ataques de fuerza bruta en login
+    usersLogin.addMethod('POST', new apigateway.LambdaIntegration(loginUserLambda), {
+      apiKeyRequired: true
+    });
 
     // RUTA 2: /orders
     const orders = api.root.addResource('orders');
