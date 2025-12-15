@@ -4,8 +4,8 @@ Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "andy@vscode.com",
-  "password": "secureExtension123"
+  "email": "mrx@gmail.com",
+  "password": "superSecretPassword"
 }
 
 ### Registrar Usuario (Fallo - password corto)
@@ -14,6 +14,26 @@ Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "andy@fail.com",
+  "email": "mrx@gmail.com",
   "password": "123"
+}
+
+### Iniciar Sesión (Exitoso)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "email": "mrx@gmail.com",
+  "password": "superSecretPassword"
+}
+
+### Iniciar Sesión (Fallo - password incorrecto)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "email": "mrx@gmail.com",
+  "password": "wrongPassword"
 }
