@@ -1,4 +1,3 @@
-import 'dotenv/config'; // Carga variables de .env si existe (útil para local)
 /**
  * Archivo: main.ts
  * UBICACIÓN: Raíz (Composition Root para AWS Lambda)
@@ -58,7 +57,11 @@ const orderController = new OrderController(orderService, view);
  * Event: POST /users
  */
 export const registerUserHandler = async (event: any) => userController.register(event);
-
+/**
+ * Handler para iniciar sesión de usuarios via API Gateway
+ * Event: POST /users/login
+ */
+export const loginUserHandler = async (event: any) => userController.login(event);
 /**
  * Handler para crear órdenes via API Gateway
  * Event: POST /orders

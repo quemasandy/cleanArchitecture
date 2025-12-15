@@ -9,12 +9,12 @@
  *   - .env (producción - AWS)
  */
 
-import { registerUserHandler, createOrderHandler } from '../src/main';
+import { registerUserHandler } from '../src/main';
 
 // Evento simulado (Mock) - Cambia estos valores según lo que quieras probar
 const mockEvent = {
     body: JSON.stringify({
-        email: "luigy@gmail.com",
+        email: "roberto@gmail.com",
         password: "superSecret"
     }),
     httpMethod: "POST",

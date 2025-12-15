@@ -57,4 +57,33 @@ export class UserController {
 
     return this.view.getResponse();
   }
+
+  async login(event: any): Promise<ApiGatewayResponse> {
+    this.view.reset();
+
+    try {
+      const request = ApiGatewayRequestMapper.toLoginUserDto(event);
+
+      if (!request.email || !request.email.includes('@')) {
+        throw new Error("Bad Request: Invalid email");
+      }
+      if (!request.password || request.password.length < 6) {
+        throw new Error("Bad Request: Invalid password");
+      }
+
+      // 3. Delegación al Servicio de Dominio
+      console.log("[UserController][login] Delegando al Servicio de Dominio...")
+      const {user, token} = await this.userService.loginUser(request.email, request.password);
+
+      // 4. Serialización y Respuesta
+      const userResponse = UserSerializer.serialize(user);
+      this.view.renderSuccess({user: userResponse, token});
+
+    } catch (error: any) {
+      console.error("[UserController][login] Error:", error);
+      this.view.renderError(error.message || "Internal Server Error");
+    }
+
+    return this.view.getResponse();
+  }
 }

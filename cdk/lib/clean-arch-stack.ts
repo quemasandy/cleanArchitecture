@@ -111,6 +111,20 @@ export class CleanArchStack extends cdk.Stack {
     // Damos permisos a la Lambda para escribir en la tabla
     usersTable.grantReadWriteData(registerUserLambda);
 
+    const loginUserLambda = new nodejs.NodejsFunction(this, 'LoginUserLambda', {
+        functionName: `login-user-${env}`,
+        runtime: lambda.Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, '../../src/main.ts'),
+        handler: 'loginUserHandler',
+        bundling: { minify: true },
+        environment: {
+            USERS_TABLE: usersTable.tableName,
+        },
+    });
+
+    // Damos permisos a la Lambda para escribir en la tabla
+    usersTable.grantReadWriteData(loginUserLambda);
+
     /**
      * LAMBDA 2: Crear Órden
      * 
@@ -186,6 +200,9 @@ export class CleanArchStack extends cdk.Stack {
     users.addMethod('POST', new apigateway.LambdaIntegration(registerUserLambda), {
       apiKeyRequired: true 
     });
+
+    const usersLogin = users.addResource('login');
+    usersLogin.addMethod('POST', new apigateway.LambdaIntegration(loginUserLambda));
 
     // RUTA 2: /orders
     const orders = api.root.addResource('orders');

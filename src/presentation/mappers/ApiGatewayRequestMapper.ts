@@ -12,6 +12,7 @@
 
 import { RegisterUserDto } from '../dtos/RegisterUserDto';
 import { CreateOrderDto } from '../dtos/CreateOrderDto';
+import { LoginUserDto } from '../dtos/LoginUserDto';
 
 export class ApiGatewayRequestMapper {
     /**
@@ -30,6 +31,10 @@ export class ApiGatewayRequestMapper {
      */
     static toRegisterUserDto(event: any): RegisterUserDto {
         return this.parseBody<RegisterUserDto>(event);
+    }
+
+    static toLoginUserDto(event: any): LoginUserDto {
+        return this.parseBody<LoginUserDto>(event);
     }
 
     /**

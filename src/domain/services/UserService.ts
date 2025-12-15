@@ -60,4 +60,38 @@ export class UserService {
     console.log(`[Dominio] Usuario registrado exitosamente: ${savedUser.id}`);
     return savedUser;
   }
+
+  /**
+   * Caso de uso: Iniciar sesión de usuario.
+   * 
+   * IMPORTANTE: Este método retorna la entidad User, NO un DTO.
+   * La transformación a DTO (LoginUserResponseDto) es responsabilidad
+   * de la capa de Presentación (Controller/Serializer).
+   */
+  async loginUser(email: string, loginPassword: string): Promise<{user: User, token: string}> {
+    console.log(`[Dominio] Iniciando inicio de sesión para ${email}...`);
+
+    const emailVO = new Email(email); // Invariantes se validan aquí
+
+    // 1. REGLA DE NEGOCIO: Verificar si el usuario ya existe
+    const existingUser = await this.userRepository.findByEmail(emailVO.getValue());
+    if (!existingUser) {
+      throw new Error("El usuario no está registrado.");
+    }
+
+    // 2. REGLA DE NEGOCIO: Validar dominio prohibido (ejemplo didáctico)
+    if (emailVO.getValue().endsWith('@evil.com')) {
+      throw new Error("Regla de Negocio: No se permiten usuarios de evil.com");
+    }
+
+    // 3. Crear la entidad
+    const loginPasswordHash = `hashed_${loginPassword}`;
+
+    if (loginPasswordHash !== existingUser.passwordHash) {
+      throw new Error("Credenciales inválidas.");
+    }
+    
+    console.log(`[Dominio] Usuario registrado exitosamente: ${existingUser.id}`);
+    return {user: existingUser, token: "auth token"};
+  }
 }

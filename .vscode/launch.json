@@ -15,20 +15,44 @@
       ]
     },
     {
-      "name": "TS: Debug Local (Sin Docker)",
+      "name": "registerUser",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npx",
       "runtimeArgs": [
         "tsx",
-        "${workspaceFolder}/scripts/local-run.ts"
+        "${workspaceFolder}/scripts/registerUser.ts"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "skipFiles": [
         "<node_internals>/**",
         "**/node_modules/**"
-      ]
+      ],
+      "env": {
+        "USERS_TABLE": "users-local",
+        "DYNAMODB_ENDPOINT": "http://localhost:8000"
+      }
+    },
+    {
+      "name": "loginUser",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "tsx",
+        "${workspaceFolder}/scripts/loginUser.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**",
+        "**/node_modules/**"
+      ],
+      "env": {
+        "USERS_TABLE": "users-local",
+        "DYNAMODB_ENDPOINT": "http://localhost:8000"
+      }
     }
   ]
 }
