@@ -44,4 +44,12 @@ export class User {
   hasValidEmail(): boolean {
     return this.email.getValue().includes('@');
   }
+
+  /**
+   * REGLA DE NEGOCIO:
+   * Validación de contraseña simple.
+   */
+  passwordMatches(password: string): boolean {
+    return this.passwordHash === password;
+  }
 }

@@ -87,7 +87,7 @@ export class UserService {
     // 3. Crear la entidad
     const loginPasswordHash = `hashed_${loginPassword}`;
 
-    if (loginPasswordHash !== existingUser.passwordHash) {
+    if (!existingUser.passwordMatches(loginPasswordHash)) {
       throw new Error("Credenciales inválidas.");
     }
     
