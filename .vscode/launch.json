@@ -18,7 +18,7 @@
       "name": "registerUser",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "/Users/andy/.nvm/versions/node/v20.19.6/bin/npx",
       "runtimeArgs": [
         "tsx",
         "${workspaceFolder}/scripts/registerUser.ts"
@@ -38,7 +38,7 @@
       "name": "loginUser",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "/Users/andy/.nvm/versions/node/v20.19.6/bin/npx",
       "runtimeArgs": [
         "tsx",
         "${workspaceFolder}/scripts/loginUser.ts"
@@ -58,7 +58,7 @@
       "name": "logoutUser",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npx",
+      "runtimeExecutable": "/Users/andy/.nvm/versions/node/v20.19.6/bin/npx",
       "runtimeArgs": [
         "tsx",
         "${workspaceFolder}/scripts/logoutUser.ts"

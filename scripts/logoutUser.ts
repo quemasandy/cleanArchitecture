@@ -16,7 +16,7 @@ import { logoutUserHandler } from '../src/main';
 const mockEvent = {
     body: JSON.stringify({
         // Token obtenido del login
-        token: "token_1766117734656_1766117766527_3x9qeuaabgu"
+        token: "token_1766119149744_1766119285462_aaiq12jfsku"
     }),
     httpMethod: "POST",
     path: "/users/logout",
