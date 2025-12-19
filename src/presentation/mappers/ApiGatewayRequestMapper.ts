@@ -13,6 +13,7 @@
 import { RegisterUserDto } from '../dtos/RegisterUserDto';
 import { CreateOrderDto } from '../dtos/CreateOrderDto';
 import { LoginUserDto } from '../dtos/LoginUserDto';
+import { LogoutUserDto } from '../dtos/LogoutUserDto';
 
 export class ApiGatewayRequestMapper {
     /**
@@ -38,9 +39,21 @@ export class ApiGatewayRequestMapper {
     }
 
     /**
+     * Convierte un evento API Gateway a LogoutUserDto.
+     * 
+     * NOTA DIDÁCTICA:
+     * En una implementación real, el token típicamente vendría en el header
+     * Authorization: Bearer <token>. Para simplicidad, lo obtenemos del body.
+     */
+    static toLogoutUserDto(event: any): LogoutUserDto {
+        return this.parseBody<LogoutUserDto>(event);
+    }
+
+    /**
      * Convierte un evento API Gateway a CreateOrderDto.
      */
     static toCreateOrderDto(event: any): CreateOrderDto {
         return this.parseBody<CreateOrderDto>(event);
     }
 }
+
