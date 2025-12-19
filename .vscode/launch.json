@@ -53,6 +53,26 @@
         "USERS_TABLE": "users-local",
         "DYNAMODB_ENDPOINT": "http://localhost:8000"
       }
+    },
+    {
+      "name": "logoutUser",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "tsx",
+        "${workspaceFolder}/scripts/logoutUser.ts"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**",
+        "**/node_modules/**"
+      ],
+      "env": {
+        "USERS_TABLE": "users-local",
+        "DYNAMODB_ENDPOINT": "http://localhost:8000"
+      }
     }
   ]
 }

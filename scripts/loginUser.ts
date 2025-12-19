@@ -2,7 +2,7 @@ import { loginUserHandler } from '../src/main';
 
 const mockEvent = {
     body: JSON.stringify({
-        email: "susy@gmail.com",
+        email: "roberto@gmail.com",
         password: "superSecret"
     }),
     httpMethod: "POST",
