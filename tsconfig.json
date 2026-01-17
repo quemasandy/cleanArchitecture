@@ -1,13 +1,51 @@
 {
+  /**
+   * Archivo: tsconfig.json
+   * UBICACIÓN: Raíz del proyecto
+   *
+   * ¿QUÉ ES tsconfig.json?
+   * - Es el archivo de configuración del compilador de TypeScript.
+   * - Define CÓMO TypeScript transforma tu código .ts a JavaScript.
+   * - Establece las reglas de tipado y compatibilidad del proyecto.
+   */
+  // Sección que contiene TODAS las opciones del compilador TypeScript
   "compilerOptions": {
+    // TARGET: ¿A qué versión de JavaScript compilar?
+    // ES2022 = JavaScript moderno con top-level await, Array.at(), Object.hasOwn()
+    // El código compilado usará sintaxis ES2022 (requiere Node 18+)
     "target": "ES2022",
+    // MODULE: ¿Qué sistema de módulos usar en el código compilado?
+    // "commonjs" = require()/module.exports (estándar de Node.js)
+    // Alternativas: "ESNext" (import/export nativo), "AMD", "UMD"
     "module": "commonjs",
+    // STRICT: ¿Activar TODAS las verificaciones estrictas de tipos?
+    // true = Activa: strictNullChecks, noImplicitAny, strictFunctionTypes, etc.
+    // REGLA DE NEGOCIO: En Clean Architecture, strict=true es OBLIGATORIO
     "strict": true,
+    // ESMODULEINTEROP: ¿Permitir importar módulos CommonJS con sintaxis ES6?
+    // true = Puedes hacer: import express from 'express'
+    // false = Tendrías que hacer: import * as express from 'express'
     "esModuleInterop": true,
+    // SKIPLIBCHECK: ¿Omitir verificación de tipos en archivos .d.ts?
+    // true = NO revisa archivos de declaración de librerías externas
+    // Acelera la compilación y evita errores en dependencias mal tipadas
     "skipLibCheck": true,
+    // FORCECONSISTENTCASINGINFILENAMES: ¿Forzar consistencia en mayúsculas/minúsculas?
+    // true = Error si importas 'MyFile.ts' pero el archivo es 'myfile.ts'
+    // IMPORTANTE: macOS es case-insensitive, pero Linux es case-sensitive
+    //             Esto evita errores al deployar en ambientes Linux (AWS Lambda)
     "forceConsistentCasingInFileNames": true,
+    // MODULERESOLUTION: ¿Cómo resolver las rutas de los imports?
+    // "node" = Usa el algoritmo de Node.js para buscar módulos
+    //          1. Busca en node_modules/
+    //          2. Busca archivos .ts, .tsx, .d.ts
+    //          3. Lee el campo "main" de package.json
     "moduleResolution": "node"
   },
+  // INCLUDE: ¿Qué archivos INCLUIR en la compilación?
+  // "src/**/*" = Todos los archivos dentro de src/, recursivamente
+  // **/ = cualquier subdirectorio
+  // *   = cualquier nombre de archivo
   "include": [
     "src/**/*"
   ]
