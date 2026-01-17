@@ -9,28 +9,34 @@
  *
  * - Para quién trabaja: DynamoDbSessionRepository.
  * - Intención: Convertir entre el modelo de dominio y el formato de DynamoDB.
- * - Misión: Manejar el prefijo "SESSION#" y otras transformaciones.
+ * - Misión: Manejar el prefijo "USER#" para pk y "SESSION#" para sk.
  *
  * ¿POR QUÉ ES IMPORTANTE?
- * - El Dominio NO debe conocer que usamos prefijos como "SESSION#".
+ * - El Dominio NO debe conocer que usamos prefijos como "USER#" o "SESSION#".
  * - Si cambiamos la estrategia de almacenamiento, solo cambiamos este mapper.
  * - Mantiene limpia la separación entre capas.
+ *
+ * SINGLE-TABLE DESIGN (Patrón Óptimo):
+ * - pk: "USER#{userId}" - Agrupa sesiones con su usuario
+ * - sk: "SESSION#{token}" - Diferencia sesiones del perfil
+ * 
+ * Esto permite:
+ * - Query única para obtener usuario + todas sus sesiones
+ * - Invalidar todas las sesiones de un usuario con una sola operación
  */
 
 import { Session } from '../../domain/interfaces/ISessionRepository';
 import { DynamoSessionItem } from '../dtos/DynamoSessionItem';
 
 /**
- * Prefijo usado para diferenciar sesiones de usuarios en Single-Table Design.
- * 
- * SINGLE-TABLE DESIGN EN DYNAMODB:
- * En lugar de tener una tabla separada para sesiones, usamos la misma tabla
- * de usuarios pero con un prefijo diferente en la partition key.
- * 
- * Ventajas:
- * - Menos tablas que gestionar
- * - Costos reducidos (una sola tabla = menos WCU/RCU base)
- * - Patrón común en arquitecturas serverless
+ * Prefijo compartido con usuarios para la partition key.
+ * Permite que sesiones y usuarios compartan el mismo pk (agrupación).
+ */
+const USER_PREFIX = 'USER#';
+
+/**
+ * Prefijo usado para el sort key de sesiones.
+ * Diferencia sesiones del perfil del usuario (sk="PROFILE").
  */
 const SESSION_PREFIX = 'SESSION#';
 
@@ -46,7 +52,7 @@ export class DynamoSessionMapper {
    */
   static toDomain(item: DynamoSessionItem): Session {
     return {
-      // Removemos el prefijo "SESSION#" para obtener el token limpio
+      // El token ya viene limpio en el item (sin prefijo)
       token: item.token,
       userId: item.userId,
       createdAt: item.createdAt,
@@ -64,23 +70,53 @@ export class DynamoSessionMapper {
    */
   static toPersistence(session: Session): DynamoSessionItem {
     return {
-      // Agregamos el prefijo "SESSION#" para el pk
-      pk: `${SESSION_PREFIX}${session.token}`,
-      token: session.token,
+      // pk: Mismo prefijo que el usuario para agrupación
+      // Ejemplo: "USER#12345"
+      pk: `${USER_PREFIX}${session.userId}`,
+      // sk: Prefijo SESSION# + token
+      // Ejemplo: "SESSION#token_abc123"
+      sk: `${SESSION_PREFIX}${session.token}`,
+      // Guardamos userId explícitamente para facilitar queries
       userId: session.userId,
+      // Token limpio para el GSI TokenIndex
+      token: session.token,
       createdAt: session.createdAt,
     };
   }
 
   /**
-   * Genera la partition key de DynamoDB a partir de un token.
+   * Genera las claves compuestas (pk + sk) para operaciones DynamoDB.
    * 
-   * Útil para operaciones de búsqueda y eliminación donde solo tenemos el token.
+   * Útil para GetItem y DeleteItem donde necesitamos pk + sk.
    * 
-   * @param token - El token de sesión limpio
-   * @returns La pk formateada para DynamoDB: "SESSION#<token>"
+   * @param userId - El ID del usuario
+   * @param token - El token de sesión
+   * @returns Objeto con pk y sk formateados para DynamoDB
    */
-  static buildPk(token: string): string {
+  static buildKey(userId: string, token: string): { pk: string; sk: string } {
+    return {
+      pk: `${USER_PREFIX}${userId}`,
+      sk: `${SESSION_PREFIX}${token}`,
+    };
+  }
+
+  /**
+   * Genera solo la partition key a partir de un userId.
+   * 
+   * @param userId - El ID del usuario
+   * @returns La pk formateada: "USER#{userId}"
+   */
+  static buildPk(userId: string): string {
+    return `${USER_PREFIX}${userId}`;
+  }
+
+  /**
+   * Genera solo la sort key a partir de un token.
+   * 
+   * @param token - El token de sesión
+   * @returns La sk formateada: "SESSION#{token}"
+   */
+  static buildSk(token: string): string {
     return `${SESSION_PREFIX}${token}`;
   }
 }

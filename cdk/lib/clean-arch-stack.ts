@@ -59,19 +59,47 @@ export class CleanArchStack extends cdk.Stack {
     // PERO espera, no tengo el import 'dynamodb' en los imports actuales.
     // Usaré 'aws-cdk-lib/aws-dynamodb'
     
+    /**
+     * SINGLE-TABLE DESIGN (Patrón Óptimo PK/SK)
+     * 
+     * Estructura de claves:
+     * - pk (Partition Key): Agrupa entidades relacionadas
+     *   • Usuarios: "USER#{userId}"
+     *   • Sesiones: "USER#{userId}" (mismo usuario)
+     * 
+     * - sk (Sort Key): Diferencia tipos de entidad
+     *   • Usuarios: "PROFILE"
+     *   • Sesiones: "SESSION#{token}"
+     * 
+     * Beneficios:
+     * 1. Una sola query para obtener usuario + todas sus sesiones
+     * 2. Transacciones atómicas entre entidades relacionadas
+     * 3. Patrón consistente para futuras entidades
+     */
     const usersTable = new cdk.aws_dynamodb.Table(this, 'UsersTable', {
         // tableName: Nombre personalizado de la tabla en DynamoDB (sin sufijos autogenerados)
         // Formato: users-{env} → Ej: users-dev, users-prd
         tableName: `users-${env}`,
+        // PARTITION KEY: Agrupa entidades del mismo usuario
         partitionKey: { name: 'pk', type: cdk.aws_dynamodb.AttributeType.STRING },
+        // SORT KEY: Diferencia tipos de entidad (PROFILE, SESSION#token, etc.)
+        sortKey: { name: 'sk', type: cdk.aws_dynamodb.AttributeType.STRING },
         billingMode: cdk.aws_dynamodb.BillingMode.PAY_PER_REQUEST,
         removalPolicy: cdk.RemovalPolicy.RETAIN, // PRODUCCIÓN: Mantiene la tabla incluso si se destruye el stack
     });
     
-    // Global Secondary Index para buscar por email
+    // GSI 1: Búsqueda de usuarios por email (para registro y login)
     usersTable.addGlobalSecondaryIndex({
         indexName: 'EmailIndex',
         partitionKey: { name: 'email', type: cdk.aws_dynamodb.AttributeType.STRING },
+        projectionType: cdk.aws_dynamodb.ProjectionType.ALL,
+    });
+
+    // GSI 2: Búsqueda de sesiones por token (para logout y validación)
+    // Necesario porque en logout solo tenemos el token, no el userId
+    usersTable.addGlobalSecondaryIndex({
+        indexName: 'TokenIndex',
+        partitionKey: { name: 'token', type: cdk.aws_dynamodb.AttributeType.STRING },
         projectionType: cdk.aws_dynamodb.ProjectionType.ALL,
     });
 
@@ -124,6 +152,25 @@ export class CleanArchStack extends cdk.Stack {
 
     // Damos permisos a la Lambda para escribir en la tabla
     usersTable.grantReadWriteData(loginUserLambda);
+
+    /**
+     * LAMBDA 3: Logout de Usuario
+     * 
+     * Invalida la sesión del usuario eliminando el token de DynamoDB.
+     */
+    const logoutUserLambda = new nodejs.NodejsFunction(this, 'LogoutUserLambda', {
+        functionName: `logout-user-${env}`,
+        runtime: lambda.Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, '../../src/main.ts'),
+        handler: 'logoutUserHandler',
+        bundling: { minify: true },
+        environment: {
+            USERS_TABLE: usersTable.tableName,
+        },
+    });
+
+    // Damos permisos a la Lambda para leer/escribir en la tabla (necesita eliminar sesiones)
+    usersTable.grantReadWriteData(logoutUserLambda);
 
     /**
      * LAMBDA 2: Crear Órden
@@ -208,6 +255,12 @@ export class CleanArchStack extends cdk.Stack {
     const usersLogin = users.addResource('login');
     // SEGURIDAD: Requiere API Key para prevenir ataques de fuerza bruta en login
     usersLogin.addMethod('POST', new apigateway.LambdaIntegration(loginUserLambda), {
+      apiKeyRequired: true
+    });
+
+    const usersLogout = users.addResource('logout');
+    // SEGURIDAD: Requiere API Key
+    usersLogout.addMethod('POST', new apigateway.LambdaIntegration(logoutUserLambda), {
       apiKeyRequired: true
     });
 

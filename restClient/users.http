@@ -1,39 +1,119 @@
-### Registrar Usuario (Exitoso)
+###############################################################################
+# FLUJO COMPLETO DE USUARIO: Registro → Login → Logout
+# 
+# Ejecutar en orden:
+# 1. Registrar usuario nuevo
+# 2. Login (copiar token de respuesta)
+# 3. Logout (pegar token)
+#
+# NOTA: Este archivo usa la extensión "REST Client" de VS Code
+###############################################################################
+
+### Variables de entorno (configura en .vscode/settings.json o usa los defaults)
+# @baseUrl = https://tu-api.execute-api.us-east-1.amazonaws.com/dev
+# @apiKey = tu-api-key-aqui
+
+###############################################################################
+# PASO 1: REGISTRAR USUARIO
+###############################################################################
+
+### 1.1 Registrar Usuario (Exitoso)
+# @name register
 POST {{baseUrl}}/users
 Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "mrx@gmail.com",
+  "email": "testuser@gmail.com",
   "password": "superSecretPassword"
 }
 
-### Registrar Usuario (Fallo - password corto)
+### 1.2 Registrar Usuario (Fallo - email duplicado)
 POST {{baseUrl}}/users
 Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "mrx@gmail.com",
+  "email": "testuser@gmail.com",
+  "password": "otherPassword123"
+}
+
+### 1.3 Registrar Usuario (Fallo - password corto)
+POST {{baseUrl}}/users
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "email": "newuser@gmail.com",
   "password": "123"
 }
 
-### Iniciar Sesión (Exitoso)
+###############################################################################
+# PASO 2: LOGIN
+###############################################################################
+
+### 2.1 Login (Exitoso)
+# @name login
+# Respuesta incluye un token que debes copiar para el logout
 POST {{baseUrl}}/users/login
 Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "mrx@gmail.com",
+  "email": "testuser@gmail.com",
   "password": "superSecretPassword"
 }
 
-### Iniciar Sesión (Fallo - password incorrecto)
+### 2.2 Login (Fallo - password incorrecto)
 POST {{baseUrl}}/users/login
 Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "mrx@gmail.com",
+  "email": "testuser@gmail.com",
   "password": "wrongPassword"
+}
+
+### 2.3 Login (Fallo - usuario no existe)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "email": "noexiste@gmail.com",
+  "password": "anyPassword123"
+}
+
+###############################################################################
+# PASO 3: LOGOUT
+###############################################################################
+
+### 3.1 Logout (Exitoso)
+# Reemplaza el token con el que recibiste del login
+POST {{baseUrl}}/users/logout
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "token": "token_1766124564872_1766125001691_ygvnu0v8yw"
+}
+
+### 3.2 Logout (Fallo - token inválido)
+POST {{baseUrl}}/users/logout
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "token": "token_invalido_123"
+}
+
+### 3.3 Logout doble (Idempotente - ya no existe la sesión)
+# Si ejecutas logout dos veces con el mismo token, 
+# la segunda vez no falla, simplemente no hay sesión que eliminar
+POST {{baseUrl}}/users/logout
+Content-Type: application/json
+x-api-key: {{apiKey}}
+
+{
+  "token": "token_1766124564872_1766125001691_ygvnu0v8yw"
 }

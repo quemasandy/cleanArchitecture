@@ -11,36 +11,48 @@
  * - Intención: Definir la forma exacta del item en DynamoDB.
  * - Misión: Tipado fuerte para operaciones de lectura/escritura en DynamoDB.
  *
- * DISEÑO SINGLE-TABLE:
- * Usamos la misma tabla de usuarios con un patrón de clave diferente:
- * - pk: "SESSION#<token>" (partition key)
- * - Esto permite consultas eficientes por token.
+ * SINGLE-TABLE DESIGN (Patrón Óptimo PK/SK):
+ * - pk: "USER#{userId}" - Mismo pk que el usuario (agrupación)
+ * - sk: "SESSION#{token}" - Identifica que este item es una sesión
+ * 
+ * BENEFICIOS:
+ * - Una sola query puede obtener usuario + todas sus sesiones
+ * - Permite invalidar todas las sesiones de un usuario eficientemente
  */
 export interface DynamoSessionItem {
   /**
    * Partition Key en DynamoDB.
-   * Formato: "SESSION#<token>" para diferenciar de usuarios.
+   * Formato: "USER#{userId}"
    * 
    * SINGLE-TABLE DESIGN:
-   * Al prefijar con "SESSION#", podemos almacenar sesiones y usuarios
-   * en la misma tabla sin colisiones de claves.
+   * Usamos el MISMO pk que el usuario para agrupar sesiones con su dueño.
+   * Esto permite queries como "dame el usuario y todas sus sesiones".
    */
   pk: string;
 
   /**
+   * Sort Key en DynamoDB.
+   * Formato: "SESSION#{token}"
+   * 
+   * Diferencia las sesiones del perfil del usuario (sk="PROFILE").
+   * Un usuario puede tener múltiples sesiones activas.
+   */
+  sk: string;
+
+  /**
    * ID del usuario propietario de esta sesión.
-   * Permite saber a quién pertenece el token.
+   * Guardado explícitamente para facilitar queries y logs.
    */
   userId: string;
 
   /**
    * Token de sesión "limpio" (sin el prefijo SESSION#).
-   * Útil para operaciones que necesitan el token original.
+   * Indexado en GSI "TokenIndex" para búsquedas por token en logout.
    */
   token: string;
 
   /**
-   * Timestamp de creación de la sesión.
+   * Timestamp de creación de la sesión (epoch milliseconds).
    * Útil para implementar expiración (TTL) en el futuro.
    */
   createdAt: number;

@@ -15,12 +15,17 @@
  * - Puerto (Port): ISessionRepository (en Dominio)
  * - Adaptador (Adapter): DynamoDbSessionRepository (en Infraestructura)
  *
- * SINGLE-TABLE DESIGN:
- * Usamos la misma tabla de usuarios, diferenciando sesiones con pk="SESSION#<token>"
+ * SINGLE-TABLE DESIGN (Patrón Óptimo PK/SK):
+ * - pk: "USER#{userId}" - Agrupa sesiones con su usuario
+ * - sk: "SESSION#{token}" - Diferencia sesiones del perfil
+ * 
+ * Beneficios:
+ * - Una sola query puede obtener usuario + todas sus sesiones
+ * - Permite invalidar todas las sesiones de un usuario eficientemente
  */
 
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand, GetCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, QueryCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { ISessionRepository, Session } from '../../domain/interfaces/ISessionRepository';
 import { DynamoSessionMapper } from '../mappers/DynamoSessionMapper';
 import { DynamoSessionItem } from '../dtos/DynamoSessionItem';
@@ -78,6 +83,10 @@ export class DynamoDbSessionRepository implements ISessionRepository {
    * 2. Ejecutar PutCommand para guardar el item
    * 3. Retornar la sesión original como confirmación
    * 
+   * SINGLE-TABLE DESIGN:
+   * - pk: "USER#{userId}" (mismo pk que el usuario)
+   * - sk: "SESSION#{token}"
+   * 
    * @param session - La sesión a persistir
    * @returns La sesión guardada
    */
@@ -100,13 +109,20 @@ export class DynamoDbSessionRepository implements ISessionRepository {
   }
 
   /**
-   * Busca una sesión por su token.
+   * Busca una sesión por su token usando el GSI TokenIndex.
    * 
    * FLUJO:
-   * 1. Construir la pk usando el prefijo SESSION#
-   * 2. Ejecutar GetCommand para obtener el item
-   * 3. Si existe, convertir DynamoSessionItem → Session
-   * 4. Si no existe, retornar null
+   * 1. Ejecutar Query en el GSI TokenIndex
+   * 2. Si hay resultado, convertir DynamoSessionItem → Session
+   * 3. Si no hay resultado, retornar null
+   * 
+   * ¿POR QUÉ USAMOS GSI?
+   * En el patrón PK/SK, las sesiones tienen:
+   * - pk: "USER#{userId}" (necesitaríamos el userId para buscar directamente)
+   * - sk: "SESSION#{token}"
+   * 
+   * Pero en logout solo tenemos el token, no el userId.
+   * El GSI TokenIndex permite buscar por token sin conocer el userId.
    * 
    * @param token - El token de sesión a buscar
    * @returns La sesión si existe, null si no se encuentra
@@ -114,51 +130,85 @@ export class DynamoDbSessionRepository implements ISessionRepository {
   async findByToken(token: string): Promise<Session | null> {
     console.log(`[DynamoDbSessionRepository] Buscando sesión por token: ${token.substring(0, 8)}...`);
     
-    // 1. Construimos la pk con el prefijo SESSION#
-    const pk = DynamoSessionMapper.buildPk(token);
-
-    // 2. Ejecutamos la consulta
-    const result = await this.docClient.send(new GetCommand({
+    // 1. Ejecutamos Query en el GSI TokenIndex
+    // El GSI tiene 'token' como partition key
+    // NOTA: 'token' es palabra reservada en DynamoDB, usamos #token como alias
+    const result = await this.docClient.send(new QueryCommand({
       TableName: this.tableName,
-      Key: { pk }
+      IndexName: 'TokenIndex',
+      KeyConditionExpression: '#tokenAttr = :tokenVal',
+      ExpressionAttributeNames: {
+        '#tokenAttr': 'token'  // Alias para evitar conflicto con palabra reservada
+      },
+      ExpressionAttributeValues: {
+        ':tokenVal': token
+      },
+      Limit: 1
     }));
 
-    // 3. Si no hay item, la sesión no existe (o ya fue eliminada por logout)
-    if (!result.Item) {
+    // 2. Si no hay items, la sesión no existe (o ya fue eliminada por logout)
+    if (!result.Items || result.Items.length === 0) {
       console.log(`[DynamoDbSessionRepository] Sesión no encontrada`);
       return null;
     }
 
-    console.log(`[DynamoDbSessionRepository] Sesión encontrada para usuario: ${result.Item.userId}`);
+    console.log(`[DynamoDbSessionRepository] Sesión encontrada para usuario: ${result.Items[0].userId}`);
     
-    // 4. Convertimos de Persistencia a Dominio
-    return DynamoSessionMapper.toDomain(result.Item as DynamoSessionItem);
+    // 3. Convertimos de Persistencia a Dominio
+    return DynamoSessionMapper.toDomain(result.Items[0] as DynamoSessionItem);
   }
 
   /**
    * Elimina (invalida) una sesión - LOGOUT.
    * 
    * FLUJO:
-   * 1. Construir la pk usando el prefijo SESSION#
-   * 2. Ejecutar DeleteCommand para eliminar el item
-   * 3. No retorna nada (void) - la sesión ya no existe
+   * 1. Buscar la sesión por token (usando GSI) para obtener pk y sk
+   * 2. Usar pk + sk para eliminar el item
+   * 
+   * ¿POR QUÉ DOS PASOS?
+   * En Single-Table Design con PK/SK, necesitamos ambas claves para eliminar.
+   * Como en logout solo tenemos el token, primero buscamos para obtener las claves.
+   * 
+   * ALTERNATIVA:
+   * Podríamos almacenar el userId en el cliente, pero eso es menos seguro.
    * 
    * IMPORTANTE:
    * - DeleteCommand es idempotente: si la sesión ya no existe, no lanza error.
-   * - Esto es útil porque no necesitamos verificar si la sesión existía antes.
    * 
    * @param token - El token de la sesión a invalidar
    */
   async delete(token: string): Promise<void> {
     console.log(`[DynamoDbSessionRepository] Eliminando sesión (logout): ${token.substring(0, 8)}...`);
     
-    // 1. Construimos la pk con el prefijo SESSION#
-    const pk = DynamoSessionMapper.buildPk(token);
+    // 1. Primero buscamos la sesión para obtener pk y sk
+    // Usamos el GSI TokenIndex porque solo tenemos el token
+    // NOTA: 'token' es palabra reservada en DynamoDB, usamos #tokenAttr como alias
+    const result = await this.docClient.send(new QueryCommand({
+      TableName: this.tableName,
+      IndexName: 'TokenIndex',
+      KeyConditionExpression: '#tokenAttr = :tokenVal',
+      ExpressionAttributeNames: {
+        '#tokenAttr': 'token'  // Alias para evitar conflicto con palabra reservada
+      },
+      ExpressionAttributeValues: {
+        ':tokenVal': token
+      },
+      Limit: 1
+    }));
 
-    // 2. Ejecutamos la eliminación
+    // 2. Si no existe, no hay nada que eliminar (idempotente)
+    if (!result.Items || result.Items.length === 0) {
+      console.log(`[DynamoDbSessionRepository] Sesión no encontrada, nada que eliminar`);
+      return;
+    }
+
+    // 3. Extraemos pk y sk del resultado
+    const { pk, sk } = result.Items[0] as DynamoSessionItem;
+
+    // 4. Ejecutamos la eliminación con las claves completas
     await this.docClient.send(new DeleteCommand({
       TableName: this.tableName,
-      Key: { pk }
+      Key: { pk, sk }
     }));
 
     console.log(`[DynamoDbSessionRepository] Sesión eliminada exitosamente`);
