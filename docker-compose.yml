@@ -7,7 +7,7 @@ services:
       - "8000:8000"
     command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
     volumes:
-      - dynamodb-data:/home/dynamodblocal/data
+      - dynamodb-data:./data/dynamoDbLocal
 
 volumes:
   dynamodb-data:
