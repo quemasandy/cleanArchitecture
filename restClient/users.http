@@ -24,7 +24,7 @@ Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "testuser@gmail.com",
+  "email": "testuser11@gmail.com",
   "password": "superSecretPassword"
 }
 
@@ -34,7 +34,7 @@ Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "testuser@gmail.com",
+  "email": "testuser11@gmail.com",
   "password": "otherPassword123"
 }
 
@@ -60,7 +60,7 @@ Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "testuser@gmail.com",
+  "email": "testuser11@gmail.com",
   "password": "superSecretPassword"
 }
 
@@ -70,7 +70,7 @@ Content-Type: application/json
 x-api-key: {{apiKey}}
 
 {
-  "email": "testuser@gmail.com",
+  "email": "testuser11@gmail.com",
   "password": "wrongPassword"
 }
 
