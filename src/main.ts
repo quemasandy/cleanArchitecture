@@ -138,3 +138,8 @@ export const logoutUserHandler = async (event: any) => userController.logout(eve
  * Event: POST /orders
  */
 export const createOrderHandler = async (event: any) => orderController.handleCreateOrder(event);
+
+// Test improvements - código con problemas intencionales para que autofix-pr los arregle
+import { LambdaView as UnusedView } from './presentation/views/LambdaView'
+const debugVar: any = "unused"
+function testFunction( ){return null}
