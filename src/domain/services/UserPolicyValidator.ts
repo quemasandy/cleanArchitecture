@@ -1,5 +1,5 @@
 /**
- * Archivo: UserPolicyService.ts
+ * Archivo: UserPolicyValidator.ts
  * UBICACIÓN: Capa de Dominio / Servicios
  *
  * ¿QUÉ ES UN DOMAIN SERVICE (SERVICIO DE DOMINIO PURO)?
@@ -33,7 +33,7 @@
 
 import { Email } from '../value-objects/Email';
 
-export class UserPolicyService {
+export class UserPolicyValidator {
   /**
    * REGLA DE NEGOCIO: Dominios de email prohibidos.
    *

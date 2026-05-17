@@ -28,7 +28,7 @@ import { User } from '../../domain/entities/User';
 import { Email } from '../../domain/value-objects/Email';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 import { IEmailService } from '../../domain/interfaces/IEmailService';
-import { UserPolicyService } from '../../domain/services/UserPolicyService';
+import { UserPolicyValidator } from '../../domain/services/UserPolicyValidator';
 
 export class RegisterUser {
   /**
@@ -44,7 +44,7 @@ export class RegisterUser {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly emailService: IEmailService,
-    private readonly userPolicy: UserPolicyService
+    private readonly userPolicyValidator: UserPolicyValidator
   ) {}
 
   /**
@@ -71,8 +71,8 @@ export class RegisterUser {
     // 3. REGLA DE NEGOCIO: Consultar al domain service
     //    El use case NO implementa la regla; DELEGA al domain service.
     //    Si mañana la política cambia (ej: bloquear más dominios), solo
-    //    se modifica UserPolicyService, no este use case.
-    this.userPolicy.validateEmailAllowed(emailVO);
+    //    se modifica UserPolicyValidator, no este use case.
+    this.userPolicyValidator.validateEmailAllowed(emailVO);
 
     // 4. Crear la entidad (el hash es simplificado para fines didácticos)
     //    NOTA: En producción, el hashing usaría bcrypt o argon2 a través

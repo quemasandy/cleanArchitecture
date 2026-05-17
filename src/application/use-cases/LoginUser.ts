@@ -25,13 +25,13 @@ import { User } from '../../domain/entities/User';
 import { Email } from '../../domain/value-objects/Email';
 import { IUserRepository } from '../../domain/interfaces/IUserRepository';
 import { ISessionRepository, Session } from '../../domain/interfaces/ISessionRepository';
-import { UserPolicyService } from '../../domain/services/UserPolicyService';
+import { UserPolicyValidator } from '../../domain/services/UserPolicyValidator';
 
 export class LoginUser {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly sessionRepository: ISessionRepository,
-    private readonly userPolicy: UserPolicyService
+    private readonly userPolicyValidator: UserPolicyValidator
   ) {}
 
   /**
@@ -53,7 +53,7 @@ export class LoginUser {
 
     // 3. REGLA DE NEGOCIO: Consultar al domain service
     //    ¿El email está en un dominio prohibido?
-    this.userPolicy.validateEmailAllowed(emailVO);
+    this.userPolicyValidator.validateEmailAllowed(emailVO);
 
     // 4. REGLA DE NEGOCIO: Verificar contraseña
     //    Delegamos a la ENTIDAD, porque la verificación de contraseña

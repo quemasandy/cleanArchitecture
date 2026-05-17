@@ -55,7 +55,7 @@ import { DynamoDbUserRepository } from './infrastructure/repositories/DynamoDbUs
 import { DynamoDbSessionRepository } from './infrastructure/repositories/DynamoDbSessionRepository';
 
 // Domain Services (lógica de negocio pura, sin dependencias externas)
-import { UserPolicyService } from './domain/services/UserPolicyService';
+import { UserPolicyValidator } from './domain/services/UserPolicyValidator';
 
 // Use Cases (Aplicación — orquestadores que coordinan dominio + puertos)
 import { RegisterUser } from './application/use-cases/RegisterUser';
@@ -91,15 +91,15 @@ const queueService: IQueueService = new AwsSqsClient();
 // 3. Dominio - Domain services puros (sin dependencias de infraestructura)
 //    A diferencia de los use cases, estos NO reciben puertos.
 //    Solo contienen reglas de negocio puras.
-const userPolicy = new UserPolicyService();
+const userPolicyValidator = new UserPolicyValidator();
 
 // 4. Aplicación - Use cases con dependencias inyectadas
 //    Cada use case recibe EXACTAMENTE los puertos que necesita.
 //    RegisterUser necesita repo + email + policy.
 //    LogoutUser solo necesita sessionRepo.
 //    Esto es el Principio de Segregación de Interfaces (ISP) en acción.
-const registerUser = new RegisterUser(userRepo, emailService, userPolicy);
-const loginUser = new LoginUser(userRepo, sessionRepo, userPolicy);
+const registerUser = new RegisterUser(userRepo, emailService, userPolicyValidator);
+const loginUser = new LoginUser(userRepo, sessionRepo, userPolicyValidator);
 const logoutUser = new LogoutUser(sessionRepo);
 const createOrder = new CreateOrder(paymentGateway, queueService, emailService);
 
