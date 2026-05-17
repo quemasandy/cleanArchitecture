@@ -75,6 +75,9 @@ if (!usersTable) {
     throw new Error("USERS_TABLE environment variable is not set. DynamoDbUserRepository requires a table name.");
 }
 
+// Desde aqui en adelante ya empiezo a armar todo antes solo estaba importando y preparando todo lo 
+// que necesitaba para concinar
+
 // 2. Infraestructura - Instanciar implementaciones concretas (Adaptadores)
 //    Estas son las únicas líneas del proyecto que mencionan tecnologías concretas.
 //    Si mañana cambiamos DynamoDB por PostgreSQL, solo tocamos ESTAS líneas.
